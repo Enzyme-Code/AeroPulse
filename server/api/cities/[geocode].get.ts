@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
     const result = await db.query(
       `SELECT id, geocode, county_name, township_name, longitude, latitude
-       FROM weather.location_info
+       FROM info.weather_location_info
        WHERE geocode = $1`,
       [geocode]
     )

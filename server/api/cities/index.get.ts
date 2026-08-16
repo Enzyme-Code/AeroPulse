@@ -7,14 +7,14 @@ export default defineEventHandler(async (event) => {
     const result = county
       ? await db.query(
           `SELECT id, geocode, county_name, township_name, longitude, latitude
-           FROM weather.location_info
+           FROM info.weather_location_info
            WHERE county_name = $1
            ORDER BY township_name`,
           [county]
         )
       : await db.query(
           `SELECT id, geocode, county_name, township_name, longitude, latitude
-           FROM weather.location_info
+           FROM info.weather_location_info
            ORDER BY county_name, township_name`
         )
 

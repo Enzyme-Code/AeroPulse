@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
          MAX(f.element_value) FILTER (WHERE f.element_name = '風速') AS wind_speed,
          MAX(f.element_value) FILTER (WHERE f.element_name = '天氣預報綜合描述') AS weather_description
        FROM weather.forecast_three_days f
-       JOIN weather.location_info l ON l.id = f.location_info_id
+       JOIN info.weather_location_info l ON l.id = f.location_info_id
        WHERE $1::text IS NULL OR l.geocode = $1
        GROUP BY l.geocode, l.county_name, l.township_name, f.data_time
        ORDER BY l.geocode, f.data_time`,
