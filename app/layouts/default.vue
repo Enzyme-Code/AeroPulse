@@ -8,7 +8,17 @@ const navItems = computed(() => [
   { label: '設定', icon: 'settings', to: '/settings' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const { cities, selectCity, ensureCitiesLoaded } = useCitySelection()
+const { cities, selectedCounty, selectedTownship, selectCity, ensureCitiesLoaded } = useCitySelection()
+
+const now = ref(new Date())
+onMounted(() => {
+  const timer = setInterval(() => { now.value = new Date() }, 1_000)
+  onUnmounted(() => clearInterval(timer))
+})
+
+const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
+  year: 'numeric', month: 'long', day: 'numeric'
+}) + ' ' + now.value.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
 
 const searchQuery = ref('')
 const isSearchFocused = ref(false)
@@ -37,7 +47,7 @@ onMounted(ensureCitiesLoaded)
 </script>
 
 <template>
-  <div class="bg-gradient-weather min-h-screen text-on-surface font-body-md overflow-x-hidden">
+  <div class="bg-gradient-weather min-h-screen flex flex-col text-on-surface font-body-md overflow-x-hidden">
     <!-- Top app bar (desktop): logo, nav links, search and actions in one centered row -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 hidden md:flex z-40">
       <div class="flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
@@ -110,9 +120,28 @@ onMounted(ensureCitiesLoaded)
     </header>
 
     <!-- Main content: centered, no sidebar offset -->
-    <main class="p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto space-y-section-gap pb-24 md:pb-margin-desktop">
+    <main class="flex-1 w-full p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto space-y-section-gap pb-24 md:pb-margin-desktop">
       <slot />
     </main>
+
+    <!-- Footer (desktop): current city, copyright, live timestamp -->
+    <footer class="hidden md:block w-full bg-surface-container-low border-t border-outline-variant/30 py-6 px-margin-desktop">
+      <div class="max-w-container-max mx-auto flex items-center justify-between gap-4 text-on-surface-variant font-label-sm text-label-sm">
+        <div class="flex-1 flex items-center gap-2">
+          <span class="material-symbols-outlined text-[16px]">location_on</span>
+          {{ selectedCounty }} {{ selectedTownship }}, 台灣
+        </div>
+        <div class="flex-1 text-center">
+          © {{ now.getFullYear() }} AeroPulse. All rights reserved.
+        </div>
+        <ClientOnly>
+          <div class="flex-1 flex items-center justify-end gap-2">
+            <span class="material-symbols-outlined text-[16px]">schedule</span>
+            {{ footerTimestamp }}
+          </div>
+        </ClientOnly>
+      </div>
+    </footer>
 
     <!-- Bottom nav (mobile) -->
     <nav class="md:hidden fixed bottom-0 w-full bg-surface/80 backdrop-blur-xl border-t border-outline-variant/20 z-50 flex justify-around py-3 px-4">
