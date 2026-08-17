@@ -223,7 +223,7 @@ const aqiProgressClass = computed(() => {
 
     <!-- Detailed metrics -->
     <section>
-      <h3 class="font-headline-md text-headline-md text-on-surface mb-6 px-2">詳細資訊</h3>
+      <h3 class="font-headline-md text-headline-md text-on-surface mb-6 px-2"></h3>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
         <MetricCard
           icon="thermostat"
