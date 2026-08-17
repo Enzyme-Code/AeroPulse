@@ -31,6 +31,12 @@ export function useCitySelection() {
     if (cities.value.length === 0) {
       cities.value = await $fetch<City[]>('/api/cities')
     }
+  }
+
+  // Only call this when the user actually opens a location-specific view — geolocation
+  // should never fire just because the app loaded.
+  async function ensureLocationResolved() {
+    await ensureCitiesLoaded()
 
     if (selectedGeocode.value) return
 
@@ -58,5 +64,14 @@ export function useCitySelection() {
     selectedGeocode.value = city.geocode
   }
 
-  return { cities, selectedCounty, selectedTownship, selectedGeocode, locatingByGps, ensureCitiesLoaded, selectCity }
+  return {
+    cities,
+    selectedCounty,
+    selectedTownship,
+    selectedGeocode,
+    locatingByGps,
+    ensureCitiesLoaded,
+    ensureLocationResolved,
+    selectCity
+  }
 }
