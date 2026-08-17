@@ -42,17 +42,68 @@ interface Station {
 interface Pollution {
   siteid: number
   sitename: string
+  country: string
   aqi: number | null
   status: string | null
 }
 
-const { selectedCounty, selectedTownship, selectedGeocode, locatingByGps, ensureCitiesLoaded } = useCitySelection()
+const { selectedCounty, selectedTownship, selectedGeocode, locatingByGps, ensureLocationResolved } = useCitySelection()
+
+const viewMode = ref<'overview' | 'detail'>('overview')
 
 const thirtySixHour = ref<ThirtySixHourBlock[]>([])
 const hourly = ref<HourlyRow[]>([])
 const weekly = ref<WeeklyRow[]>([])
 const pollution = ref<Pollution | null>(null)
 const loading = ref(true)
+
+// Overview tab: every county's current 36-hour block + average AQI, no region selection needed.
+const overviewBlocks = ref<ThirtySixHourBlock[]>([])
+const overviewPollution = ref<Pollution[]>([])
+const overviewLoading = ref(true)
+
+async function loadOverview() {
+  overviewLoading.value = true
+
+  const [blocks, pollutionRows] = await Promise.all([
+    $fetch<ThirtySixHourBlock[]>('/api/weather/36hour'),
+    $fetch<Pollution[]>('/api/air/pollution')
+  ])
+
+  overviewBlocks.value = blocks
+  overviewPollution.value = pollutionRows
+  overviewLoading.value = false
+}
+
+const overviewAqiByCounty = computed(() => {
+  const grouped = new Map<string, number[]>()
+  for (const row of overviewPollution.value) {
+    if (row.aqi == null) continue
+    const list = grouped.get(row.country) ?? []
+    list.push(row.aqi)
+    grouped.set(row.country, list)
+  }
+
+  const averages = new Map<string, number>()
+  for (const [county, values] of grouped) {
+    averages.set(county, Math.round(values.reduce((sum, v) => sum + v, 0) / values.length))
+  }
+  return averages
+})
+
+const overviewRows = computed(() => {
+  const grouped = new Map<string, ThirtySixHourBlock[]>()
+  for (const row of overviewBlocks.value) {
+    const list = grouped.get(row.county_name) ?? []
+    list.push(row)
+    grouped.set(row.county_name, list)
+  }
+  return Array.from(grouped.entries()).map(([county, rows]) => ({
+    county,
+    block: currentBlock(rows),
+    aqi: overviewAqiByCounty.value.get(county) ?? null
+  }))
+})
 
 async function loadDashboard() {
   if (!selectedCounty.value || !selectedGeocode.value) return
@@ -80,12 +131,25 @@ async function loadDashboard() {
   loading.value = false
 }
 
-onMounted(async () => {
-  await ensureCitiesLoaded()
-  await loadDashboard()
-})
+async function enterDetailView() {
+  viewMode.value = 'detail'
 
-watch(selectedGeocode, loadDashboard)
+  const previousGeocode = selectedGeocode.value
+  await ensureLocationResolved()
+
+  // If the geocode actually changed, the selectedGeocode watcher below already
+  // triggers loadDashboard(); only call it here when nothing changed (e.g. a
+  // location was already picked before switching tabs), so it isn't loaded twice.
+  if (selectedGeocode.value === previousGeocode) {
+    await loadDashboard()
+  }
+}
+
+onMounted(loadOverview)
+
+watch(selectedGeocode, () => {
+  if (viewMode.value === 'detail') loadDashboard()
+})
 
 function currentBlock(rows: ThirtySixHourBlock[]): ThirtySixHourBlock | null {
   if (!rows.length) return null
@@ -141,6 +205,68 @@ const aqiProgressClass = computed(() => {
 
 <template>
   <div>
+    <!-- View toggle -->
+    <div class="inline-flex rounded-full bg-surface-container p-1 mb-2">
+      <button
+        class="px-4 py-2 rounded-full font-body-md text-body-md transition-colors"
+        :class="viewMode === 'overview' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-high'"
+        @click="viewMode = 'overview'"
+      >
+        總覽
+      </button>
+      <button
+        class="px-4 py-2 rounded-full font-body-md text-body-md transition-colors"
+        :class="viewMode === 'detail' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-high'"
+        @click="enterDetailView"
+      >
+        詳細查詢
+      </button>
+    </div>
+
+    <!-- Overview: every county's current conditions, no location needed -->
+    <section v-if="viewMode === 'overview'" class="glass-card rounded-xl p-6">
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-on-surface-variant font-label-sm text-label-sm border-b border-outline-variant/20">
+              <th class="py-2 pr-4 font-normal">縣市</th>
+              <th class="py-2 pr-4 font-normal">天氣</th>
+              <th class="py-2 pr-4 font-normal">溫度</th>
+              <th class="py-2 pr-4 font-normal">降雨機率</th>
+              <th class="py-2 pr-4 font-normal">空氣品質</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in overviewRows" :key="row.county" class="border-b border-outline-variant/10 last:border-0">
+              <td class="py-3 pr-4 font-body-md text-body-md text-on-surface whitespace-nowrap">{{ row.county }}</td>
+              <td class="py-3 pr-4">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-xl">{{ weatherIcon(row.block?.wx_text ?? null) }}</span>
+                  <span class="font-body-md text-body-md text-on-surface-variant whitespace-nowrap">{{ row.block?.wx_text ?? '--' }}</span>
+                </div>
+              </td>
+              <td class="py-3 pr-4 font-body-md text-body-md text-on-surface whitespace-nowrap">
+                {{ row.block?.min_temp ?? '--' }}° - {{ row.block?.max_temp ?? '--' }}°
+              </td>
+              <td class="py-3 pr-4 font-body-md text-body-md text-primary font-bold">{{ row.block?.pop ?? '--' }}%</td>
+              <td class="py-3 pr-4">
+                <span class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
+                  <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: aqiColor(row.aqi) }" />
+                  AQI: {{ row.aqi ?? '--' }}
+                </span>
+              </td>
+            </tr>
+            <tr v-if="!overviewLoading && overviewRows.length === 0">
+              <td colspan="5" class="py-6 text-center text-on-surface-variant">目前沒有資料</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Detail: hero + hourly forecast + metrics for one location -->
+    <template v-if="viewMode === 'detail'">
     <!-- Hero -->
     <section>
       <div class="glass-card rounded-xl p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
@@ -262,5 +388,6 @@ const aqiProgressClass = computed(() => {
         />
       </div>
     </section>
+    </template>
   </div>
 </template>
