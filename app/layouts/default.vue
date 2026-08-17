@@ -20,27 +20,31 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
   year: 'numeric', month: 'long', day: 'numeric'
 }) + ' ' + now.value.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
 
-const searchQuery = ref('')
-const isSearchFocused = ref(false)
+// County/township dropdowns mirror the shared selection, but only commit back to it
+// (and only then trigger a data refresh) once both levels are picked.
+const draftCounty = ref(selectedCounty.value)
+const draftTownship = ref(selectedTownship.value)
 
-const searchResults = computed(() => {
-  const query = searchQuery.value.trim()
-  if (!query) return []
+watch(selectedCounty, (value) => { draftCounty.value = value })
+watch(selectedTownship, (value) => { draftTownship.value = value })
 
-  return cities.value
-    .filter(c => c.county_name.includes(query) || c.township_name.includes(query))
-    .slice(0, 8)
-})
+const countyOptions = computed(() => Array.from(new Set(cities.value.map(c => c.county_name))))
 
-function pickCity(city: (typeof cities.value)[number]) {
-  selectCity(city)
-  searchQuery.value = ''
-  isSearchFocused.value = false
+const townshipOptions = computed(() =>
+  cities.value.filter(c => c.county_name === draftCounty.value).map(c => c.township_name)
+)
+
+function commitDraftSelection() {
+  const match = cities.value.find(
+    c => c.county_name === draftCounty.value && c.township_name === draftTownship.value
+  )
+  if (match) selectCity(match)
 }
 
-function handleSearchBlur() {
-  // delay so a click on a dropdown item registers before the list unmounts
-  setTimeout(() => { isSearchFocused.value = false }, 150)
+function onCountyChange() {
+  const firstTownship = cities.value.find(c => c.county_name === draftCounty.value)
+  draftTownship.value = firstTownship?.township_name ?? ''
+  commitDraftSelection()
 }
 
 onMounted(ensureCitiesLoaded)
@@ -73,30 +77,21 @@ onMounted(ensureCitiesLoaded)
           </NuxtLink>
         </nav>
 
-        <div class="relative flex-1 max-w-xs">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50">search</span>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜尋城市..."
-            class="w-full pl-10 pr-4 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md placeholder-on-surface-variant/50"
-            @focus="isSearchFocused = true"
-            @blur="handleSearchBlur"
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+          <select
+            v-model="draftCounty"
+            class="w-1/2 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
+            @change="onCountyChange"
           >
-
-          <ul
-            v-if="isSearchFocused && searchResults.length"
-            class="absolute top-full mt-2 w-full glass-card rounded-lg overflow-hidden z-50 max-h-72 overflow-y-auto"
+            <option v-for="county in countyOptions" :key="county" :value="county">{{ county }}</option>
+          </select>
+          <select
+            v-model="draftTownship"
+            class="w-1/2 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
+            @change="commitDraftSelection"
           >
-            <li
-              v-for="city in searchResults"
-              :key="city.geocode"
-              class="px-4 py-2 hover:bg-primary/10 cursor-pointer text-body-md text-on-surface"
-              @mousedown.prevent="pickCity(city)"
-            >
-              {{ city.county_name }} {{ city.township_name }}
-            </li>
-          </ul>
+            <option v-for="township in townshipOptions" :key="township" :value="township">{{ township }}</option>
+          </select>
         </div>
 
         <div class="flex items-center gap-3 shrink-0">
