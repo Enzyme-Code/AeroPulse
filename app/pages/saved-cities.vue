@@ -32,6 +32,7 @@ interface CityCardData {
 
 const { savedCities, load, addCity, removeCity } = useSavedCities()
 const { cities, selectCity, ensureCitiesLoaded } = useCitySelection()
+const { viewMode } = useViewMode()
 const router = useRouter()
 
 const cardData = ref<CityCardData[]>([])
@@ -70,6 +71,7 @@ watch(savedCities, loadAll)
 
 function goToCity(city: CityCardData) {
   selectCity(city)
+  viewMode.value = 'detail'
   router.push('/')
 }
 
@@ -154,8 +156,7 @@ function handleAddCity(city: (typeof cities.value)[number]) {
               {{ weatherIcon(card.hour?.wx_text ?? null) }}
             </span>
             <div>
-              <div class="font-display-temp text-4xl text-on-surface leading-none">{{ card.hour?.temp ?? '--' }}°</div>
-              <div class="font-body-md text-body-md text-on-surface-variant">{{ card.hour?.wx_text ?? '載入中' }}</div>
+              <div class="font-display-temp text-4xl text-on-surface leading-none">{{ card.hour?.temp ?? '--' }}°C</div>
             </div>
           </div>
           <div class="text-right">
