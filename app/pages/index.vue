@@ -346,9 +346,10 @@ const aqiProgressClass = computed(() => {
         <div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed-dim/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
 
         <div class="z-10 text-center md:text-left mb-6 md:mb-0">
-          <h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">
+          <h2 v-if="!locatingByGps" class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">
             {{ selectedCounty }} {{ selectedTownship }}
           </h2>
+          <div v-else class="h-9 md:h-10 w-40 mx-auto md:mx-0 bg-surface-container-high rounded-lg animate-pulse mb-2" />
           <ClientOnly>
             <p class="font-body-lg text-body-lg text-on-surface-variant mb-6 flex items-center justify-center md:justify-start gap-2">
               <span v-if="locatingByGps" class="flex items-center gap-1">
