@@ -24,11 +24,33 @@ export function fillForwardHourly<T extends HourlyLike>(rows: T[]): T[] {
   let lastWindDirection: string | null = null
   let lastWindSpeed: string | null = null
 
-  return sorted.map((row) => {
+  const filled = sorted.map((row) => {
     lastWxText = row.wx_text ?? lastWxText
     lastPop = row.pop ?? lastPop
     lastWindDirection = row.wind_direction ?? lastWindDirection
     lastWindSpeed = row.wind_speed ?? lastWindSpeed
     return { ...row, wx_text: lastWxText, pop: lastPop, wind_direction: lastWindDirection, wind_speed: lastWindSpeed }
   })
+
+  // Rows before CWA's first published reading for this fetch window have nothing to carry
+  // forward from, so they'd otherwise stay null — back-fill those leading gaps from the
+  // next known value instead.
+  let nextWxText: string | null = null
+  let nextPop: string | null = null
+  let nextWindDirection: string | null = null
+  let nextWindSpeed: string | null = null
+
+  for (let i = filled.length - 1; i >= 0; i--) {
+    const row = filled[i]
+    nextWxText = row.wx_text ?? nextWxText
+    nextPop = row.pop ?? nextPop
+    nextWindDirection = row.wind_direction ?? nextWindDirection
+    nextWindSpeed = row.wind_speed ?? nextWindSpeed
+    row.wx_text ??= nextWxText
+    row.pop ??= nextPop
+    row.wind_direction ??= nextWindDirection
+    row.wind_speed ??= nextWindSpeed
+  }
+
+  return filled
 }
