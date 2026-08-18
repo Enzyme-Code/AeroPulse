@@ -298,7 +298,47 @@ const aqiProgressClass = computed(() => {
     <!-- Overview: every county's current conditions, no location needed -->
     <section v-if="viewMode === 'overview'" class="glass-card rounded-xl p-6">
 
-      <div class="overflow-x-auto">
+      <!-- Card list (mobile) -->
+      <div class="grid grid-cols-1 gap-3 md:hidden">
+        <div
+          v-for="row in overviewRows"
+          :key="row.county"
+          class="glass-card rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:bg-primary/5 transition-colors"
+          @click="viewCountyDetail(row.county)"
+        >
+          <span class="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary text-xl">{{ weatherIcon(row.block?.wx_text ?? null) }}</span>
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-body-md text-body-md text-on-surface font-bold whitespace-nowrap">{{ row.county }}</span>
+              <span class="font-body-md text-body-md text-on-surface whitespace-nowrap">{{ row.block?.min_temp ?? '--' }}°C - {{ row.block?.max_temp ?? '--' }}°C</span>
+            </div>
+            <div class="mt-1">
+              <span class="font-body-md text-body-md text-on-surface-variant whitespace-nowrap">{{ row.block?.wx_text ?? '--' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 mt-1">
+              <span class="flex items-center gap-1 text-primary font-label-sm text-label-sm font-bold whitespace-nowrap">
+                <span class="material-symbols-outlined text-sm">water_drop</span>
+                降雨機率 {{ row.block?.pop ?? '--' }}%
+              </span>
+              <span
+                class="font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0"
+                :style="{ backgroundColor: aqiColor(row.aqi) + '1f', color: aqiColor(row.aqi) }"
+              >
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: aqiColor(row.aqi) }" />
+                AQI: {{ row.aqi ?? '--' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div v-if="!overviewLoading && overviewRows.length === 0" class="glass-card rounded-xl p-6 text-center text-on-surface-variant">
+          目前沒有資料
+        </div>
+      </div>
+
+      <!-- Table (desktop) -->
+      <div class="overflow-x-auto hidden md:block">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="text-on-surface-variant font-label-sm text-label-sm bg-surface-container-low">
