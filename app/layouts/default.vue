@@ -1,14 +1,21 @@
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
 
 const navItems = computed(() => [
   { label: '首頁', icon: 'dashboard', to: '/' },
   { label: '氣象地圖', icon: 'map', to: '/map' },
-  { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' },
-  { label: '設定', icon: 'settings', to: '/settings' }
+  { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const { cities, selectedCounty, selectedTownship, selectCity, ensureCitiesLoaded } = useCitySelection()
+const { selectedCounty, selectedTownship, locatingByGps, locateMe } = useCitySelection()
+const { viewMode } = useViewMode()
+
+async function locateMeAndShowDetail() {
+  await locateMe()
+  viewMode.value = 'detail'
+  router.push('/')
+}
 
 const now = ref(new Date())
 onMounted(() => {
@@ -19,42 +26,32 @@ onMounted(() => {
 const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
   year: 'numeric', month: 'long', day: 'numeric'
 }) + ' ' + now.value.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
-
-// County/township dropdowns mirror the shared selection, but only commit back to it
-// (and only then trigger a data refresh) once both levels are picked.
-const draftCounty = ref(selectedCounty.value)
-const draftTownship = ref(selectedTownship.value)
-
-watch(selectedCounty, (value) => { draftCounty.value = value })
-watch(selectedTownship, (value) => { draftTownship.value = value })
-
-const countyOptions = computed(() => Array.from(new Set(cities.value.map(c => c.county_name))))
-
-const townshipOptions = computed(() =>
-  cities.value.filter(c => c.county_name === draftCounty.value).map(c => c.township_name)
-)
-
-function commitDraftSelection() {
-  const match = cities.value.find(
-    c => c.county_name === draftCounty.value && c.township_name === draftTownship.value
-  )
-  if (match) selectCity(match)
-}
-
-function onCountyChange() {
-  const firstTownship = cities.value.find(c => c.county_name === draftCounty.value)
-  draftTownship.value = firstTownship?.township_name ?? ''
-  commitDraftSelection()
-}
-
-onMounted(ensureCitiesLoaded)
 </script>
 
 <template>
   <div class="bg-gradient-weather min-h-screen flex flex-col text-on-surface font-body-md overflow-x-hidden">
+    <!-- Top app bar (mobile): just the logo, so the screen doesn't feel empty above the content -->
+    <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 flex md:hidden z-40">
+      <div class="flex items-center justify-between w-full h-14 px-margin-mobile">
+        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
+          </div>
+          <h1 class="font-headline-md text-headline-md text-primary">AeroPulse</h1>
+        </NuxtLink>
+        <button
+          class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors"
+          title="偵測目前位置"
+          @click="locateMeAndShowDetail"
+        >
+          <span class="material-symbols-outlined" :class="{ 'animate-pulse text-primary': locatingByGps }">my_location</span>
+        </button>
+      </div>
+    </header>
+
     <!-- Top app bar (desktop): logo, nav links, search and actions in one centered row -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 hidden md:flex z-40">
-      <div class="flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
+      <div class="relative flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
         <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
           <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
@@ -62,7 +59,7 @@ onMounted(ensureCitiesLoaded)
           <h1 class="font-headline-md text-headline-md text-primary">AeroPulse</h1>
         </NuxtLink>
 
-        <nav class="flex items-center gap-1 shrink-0">
+        <nav class="flex items-center gap-1 shrink-0 absolute left-1/2 -translate-x-1/2">
           <NuxtLink
             v-for="item in navItems"
             :key="item.label"
@@ -77,39 +74,16 @@ onMounted(ensureCitiesLoaded)
           </NuxtLink>
         </nav>
 
-        <div class="flex items-center gap-2 flex-1 max-w-md">
-          <select
-            v-model="draftCounty"
-            class="w-1/2 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
-            @change="onCountyChange"
-          >
-            <option v-for="county in countyOptions" :key="county" :value="county">{{ county }}</option>
-          </select>
-          <select
-            v-model="draftTownship"
-            class="w-1/2 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
-            @change="commitDraftSelection"
-          >
-            <option v-for="township in townshipOptions" :key="township" :value="township">{{ township }}</option>
-          </select>
-        </div>
-
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex items-center gap-3 ml-auto shrink-0">
           <NuxtLink
-            to="/saved-cities"
-            class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-label-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+            to="/"
+            class="p-2 rounded-full transition-colors"
+            :class="viewMode === 'detail' ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
+            title="詳細資訊"
+            @click="viewMode = 'detail'"
           >
-            新增城市
+            <span class="material-symbols-outlined">query_stats</span>
           </NuxtLink>
-          <button class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors">
-            <span class="material-symbols-outlined">notifications</span>
-          </button>
-          <button class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors">
-            <span class="material-symbols-outlined">dark_mode</span>
-          </button>
-          <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
-            <span class="material-symbols-outlined text-lg">person</span>
-          </div>
         </div>
       </div>
     </header>
