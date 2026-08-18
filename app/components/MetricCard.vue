@@ -19,7 +19,7 @@ defineProps<{
     <div class="mt-2">
       <span class="font-headline-lg text-headline-lg text-on-surface block">
         {{ value }}
-        <span v-if="unit" class="text-lg text-on-surface-variant font-normal">{{ unit }}</span>
+        <span v-if="unit" class="text-2xl text-on-surface-variant font-normal">{{ unit }}</span>
       </span>
       <span v-if="caption" class="font-body-md text-body-md text-on-surface-variant mt-1 block">{{ caption }}</span>
     </div>
