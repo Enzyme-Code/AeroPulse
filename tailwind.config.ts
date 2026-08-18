@@ -71,13 +71,13 @@ export default {
         'section-gap': '2.5rem'
       },
       fontFamily: {
-        'body-lg': ['Inter'],
-        'body-md': ['Inter'],
-        'headline-md': ['Inter'],
-        'headline-lg': ['Inter'],
-        'headline-lg-mobile': ['Inter'],
-        'display-temp': ['Inter'],
-        'label-sm': ['Inter']
+        'body-lg': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'body-md': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'headline-md': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'headline-lg': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'headline-lg-mobile': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'display-temp': ['Inter', 'Noto Sans TC', 'sans-serif'],
+        'label-sm': ['Inter', 'Noto Sans TC', 'sans-serif']
       },
       fontSize: {
         'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
