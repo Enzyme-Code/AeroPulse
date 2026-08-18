@@ -108,6 +108,13 @@ function onCountyChange() {
   commitDraftSelection()
 }
 
+function viewCountyDetail(county: string) {
+  const matches = cities.value.filter(c => c.county_name === county)
+  const match = matches[Math.floor(Math.random() * matches.length)]
+  if (match) selectCity(match)
+  viewMode.value = 'detail'
+}
+
 onMounted(ensureCitiesLoaded)
 
 const thirtySixHour = ref<ThirtySixHourBlock[]>([])
@@ -302,29 +309,44 @@ const aqiProgressClass = computed(() => {
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="text-on-surface-variant font-label-sm text-label-sm border-b border-outline-variant/20">
-              <th class="py-2 pr-4 font-normal">縣市</th>
-              <th class="py-2 pr-4 font-normal">天氣</th>
-              <th class="py-2 pr-4 font-normal">溫度</th>
-              <th class="py-2 pr-4 font-normal">降雨機率</th>
-              <th class="py-2 pr-4 font-normal">空氣品質</th>
+            <tr class="text-on-surface-variant font-label-sm text-label-sm bg-surface-container-low">
+              <th class="py-3 px-4 font-normal rounded-l-lg">縣市</th>
+              <th class="py-3 px-4 font-normal">天氣</th>
+              <th class="py-3 px-4 font-normal">溫度</th>
+              <th class="py-3 px-4 font-normal">降雨機率</th>
+              <th class="py-3 px-4 font-normal rounded-r-lg">空氣品質</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in overviewRows" :key="row.county" class="border-b border-outline-variant/10 last:border-0">
-              <td class="py-3 pr-4 font-body-md text-body-md text-on-surface whitespace-nowrap">{{ row.county }}</td>
-              <td class="py-3 pr-4">
+            <tr
+              v-for="row in overviewRows"
+              :key="row.county"
+              class="border-b border-outline-variant/10 last:border-0 cursor-pointer hover:bg-primary/5 transition-colors"
+              @click="viewCountyDetail(row.county)"
+            >
+              <td class="py-3 px-4 font-body-md text-body-md text-on-surface font-bold whitespace-nowrap">{{ row.county }}</td>
+              <td class="py-3 px-4">
                 <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-primary text-xl">{{ weatherIcon(row.block?.wx_text ?? null) }}</span>
+                  <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-primary text-lg">{{ weatherIcon(row.block?.wx_text ?? null) }}</span>
+                  </span>
                   <span class="font-body-md text-body-md text-on-surface-variant whitespace-nowrap">{{ row.block?.wx_text ?? '--' }}</span>
                 </div>
               </td>
-              <td class="py-3 pr-4 font-body-md text-body-md text-on-surface whitespace-nowrap">
+              <td class="py-3 px-4 font-body-md text-body-md text-on-surface whitespace-nowrap">
                 {{ row.block?.min_temp ?? '--' }}°C - {{ row.block?.max_temp ?? '--' }}°C
               </td>
-              <td class="py-3 pr-4 font-body-md text-body-md text-primary font-bold">{{ row.block?.pop ?? '--' }}%</td>
-              <td class="py-3 pr-4">
-                <span class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-bold whitespace-nowrap">
+                  <span class="material-symbols-outlined text-sm">water_drop</span>
+                  {{ row.block?.pop ?? '--' }}%
+                </span>
+              </td>
+              <td class="py-3 px-4">
+                <span
+                  class="font-label-sm text-label-sm font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap"
+                  :style="{ backgroundColor: aqiColor(row.aqi) + '1f', color: aqiColor(row.aqi) }"
+                >
                   <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: aqiColor(row.aqi) }" />
                   AQI: {{ row.aqi ?? '--' }}
                 </span>
