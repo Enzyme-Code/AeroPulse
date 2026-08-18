@@ -214,13 +214,6 @@ watch(selectedGeocode, () => {
   if (viewMode.value === 'detail') loadDashboard()
 })
 
-function currentBlock(rows: ThirtySixHourBlock[]): ThirtySixHourBlock | null {
-  if (!rows.length) return null
-  const now = Date.now()
-  const active = rows.find(r => new Date(r.start_time).getTime() <= now && now < new Date(r.end_time).getTime())
-  return active ?? closestByTime(rows, 'start_time')
-}
-
 // UV index is only published for one daytime block per day; nearby blocks can be null, so
 // search among blocks that actually have a reading rather than whichever block covers "now".
 function currentWeeklyBlock(rows: WeeklyRow[]): WeeklyRow | null {

@@ -16,6 +16,15 @@ export function closestByTime<T extends Record<string, unknown>>(rows: T[], key:
   }, null)?.row ?? null
 }
 
+// Picks the block whose start/end actually cover "now"; falls back to the nearest one
+// (e.g. right after the last published block ends) so callers always get something.
+export function currentBlock<T extends { start_time: string, end_time: string }>(rows: T[]): T | null {
+  if (!rows.length) return null
+  const now = Date.now()
+  const active = rows.find(r => new Date(r.start_time).getTime() <= now && now < new Date(r.end_time).getTime())
+  return active ?? closestByTime(rows, 'start_time')
+}
+
 // CWA only refreshes wx_text/pop/wind every 3 hours; carry the last known value forward for the hours in between.
 export function fillForwardHourly<T extends HourlyLike>(rows: T[]): T[] {
   const sorted = [...rows].sort((a, b) => new Date(a.data_time).getTime() - new Date(b.data_time).getTime())
