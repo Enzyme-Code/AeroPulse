@@ -33,6 +33,21 @@ export function useCitySelection() {
     }
   }
 
+  async function resolveByGps(): Promise<boolean> {
+    locatingByGps.value = true
+    const coords = await getCurrentCoords()
+    const nearest = coords ? findNearestCity(coords, cities.value) : null
+    locatingByGps.value = false
+
+    if (nearest) {
+      selectedCounty.value = nearest.county_name
+      selectedTownship.value = nearest.township_name
+      selectedGeocode.value = nearest.geocode
+    }
+
+    return nearest != null
+  }
+
   // Only call this when the user actually opens a location-specific view — geolocation
   // should never fire just because the app loaded.
   async function ensureLocationResolved() {
@@ -42,23 +57,21 @@ export function useCitySelection() {
 
     if (!hasTriedGeolocation.value) {
       hasTriedGeolocation.value = true
-      locatingByGps.value = true
-      const coords = await getCurrentCoords()
-      const nearest = coords ? findNearestCity(coords, cities.value) : null
-      locatingByGps.value = false
-
-      if (nearest) {
-        selectedCounty.value = nearest.county_name
-        selectedTownship.value = nearest.township_name
-        selectedGeocode.value = nearest.geocode
-        return
-      }
+      if (await resolveByGps()) return
     }
 
     applyFallbackDefault()
   }
 
-  function selectCity(city: City) {
+  // Explicit "use my location" action — unlike ensureLocationResolved, always attempts
+  // a fresh GPS lookup even if one already ran or a location is already selected.
+  async function locateMe() {
+    await ensureCitiesLoaded()
+    hasTriedGeolocation.value = true
+    await resolveByGps()
+  }
+
+  function selectCity(city: Pick<City, 'geocode' | 'county_name' | 'township_name'>) {
     selectedCounty.value = city.county_name
     selectedTownship.value = city.township_name
     selectedGeocode.value = city.geocode
@@ -72,6 +85,7 @@ export function useCitySelection() {
     locatingByGps,
     ensureCitiesLoaded,
     ensureLocationResolved,
+    locateMe,
     selectCity
   }
 }
