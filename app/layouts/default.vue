@@ -8,11 +8,11 @@ const navItems = computed(() => [
   { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const { selectedCounty, selectedTownship, locatingByGps, locateMe } = useCitySelection()
+const { selectedCounty, selectedTownship, locatingByGps, forceRelocate } = useCitySelection()
 const { viewMode } = useViewMode()
 
-async function locateMeAndShowDetail() {
-  await locateMe()
+function locateMeAndShowDetail() {
+  forceRelocate.value = true
   viewMode.value = 'detail'
   router.push('/')
 }
@@ -33,7 +33,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
     <!-- Top app bar (mobile): just the logo, so the screen doesn't feel empty above the content -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 flex md:hidden z-40">
       <div class="flex items-center justify-between w-full h-14 px-margin-mobile">
-        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity" @click="viewMode = 'overview'">
           <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
           </div>
@@ -52,7 +52,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
     <!-- Top app bar (desktop): logo, nav links, search and actions in one centered row -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 hidden md:flex z-40">
       <div class="relative flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
-        <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
+        <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity" @click="viewMode = 'overview'">
           <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
           </div>

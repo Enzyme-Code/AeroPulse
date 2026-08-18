@@ -15,6 +15,12 @@ export function useCitySelection() {
   const hasTriedGeolocation = useState('hasTriedGeolocation', () => false)
   const locatingByGps = useState('locatingByGps', () => false)
 
+  // Set by the navbar's "use my location" button before it navigates to the detail view;
+  // loadDetailData reads and clears it so the single ensureLocationResolved call that
+  // already runs on entering detail view does the (forced) GPS lookup, instead of a
+  // second call racing it.
+  const forceRelocate = useState('forceRelocate', () => false)
+
   function applyFallbackDefault() {
     const match = cities.value.find(
       c => c.county_name === selectedCounty.value && c.township_name === selectedTownship.value
@@ -49,26 +55,19 @@ export function useCitySelection() {
   }
 
   // Only call this when the user actually opens a location-specific view — geolocation
-  // should never fire just because the app loaded.
-  async function ensureLocationResolved() {
+  // should never fire just because the app loaded. Pass force to re-run GPS even if a
+  // location is already selected (the navbar's "use my location" button).
+  async function ensureLocationResolved(force = false) {
     await ensureCitiesLoaded()
 
-    if (selectedGeocode.value) return
+    if (selectedGeocode.value && !force) return
 
-    if (!hasTriedGeolocation.value) {
+    if (force || !hasTriedGeolocation.value) {
       hasTriedGeolocation.value = true
       if (await resolveByGps()) return
     }
 
     applyFallbackDefault()
-  }
-
-  // Explicit "use my location" action — unlike ensureLocationResolved, always attempts
-  // a fresh GPS lookup even if one already ran or a location is already selected.
-  async function locateMe() {
-    await ensureCitiesLoaded()
-    hasTriedGeolocation.value = true
-    await resolveByGps()
   }
 
   function selectCity(city: Pick<City, 'geocode' | 'county_name' | 'township_name'>) {
@@ -83,9 +82,9 @@ export function useCitySelection() {
     selectedTownship,
     selectedGeocode,
     locatingByGps,
+    forceRelocate,
     ensureCitiesLoaded,
     ensureLocationResolved,
-    locateMe,
     selectCity
   }
 }

@@ -77,7 +77,7 @@ interface Pollution {
   so2_avg: string | null
 }
 
-const { cities, selectedCounty, selectedTownship, selectedGeocode, locatingByGps, ensureLocationResolved, ensureCitiesLoaded, selectCity } = useCitySelection()
+const { cities, selectedCounty, selectedTownship, selectedGeocode, locatingByGps, forceRelocate, ensureLocationResolved, ensureCitiesLoaded, selectCity } = useCitySelection()
 
 const { viewMode } = useViewMode()
 
@@ -199,7 +199,9 @@ async function loadDashboard() {
 
 async function loadDetailData() {
   const previousGeocode = selectedGeocode.value
-  await ensureLocationResolved()
+  const force = forceRelocate.value
+  forceRelocate.value = false
+  await ensureLocationResolved(force)
 
   // If the geocode actually changed, the selectedGeocode watcher below already
   // triggers loadDashboard(); only call it here when nothing changed (e.g. a
@@ -275,32 +277,22 @@ const aqiProgressClass = computed(() => {
 
 <template>
   <div>
-    <!-- Back to overview + location picker (only shown once switched into detail view) -->
-    <div v-if="viewMode === 'detail'" class="flex items-center justify-between gap-2 mb-2">
-      <button
-        class="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-surface-container font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high transition-colors"
-        @click="viewMode = 'overview'"
+    <!-- Location picker (only shown once switched into detail view; the logo returns to overview) -->
+    <div v-if="viewMode === 'detail'" class="flex items-center gap-2 mb-2 md:justify-center">
+      <select
+        v-model="draftCounty"
+        class="flex-1 md:flex-none md:w-40 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
+        @change="onCountyChange"
       >
-        <span class="material-symbols-outlined text-lg">arrow_back</span>
-        返回總覽
-      </button>
-
-      <div class="flex items-center gap-2">
-        <select
-          v-model="draftCounty"
-          class="w-32 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
-          @change="onCountyChange"
-        >
-          <option v-for="county in countyOptions" :key="county" :value="county">{{ county }}</option>
-        </select>
-        <select
-          v-model="draftTownship"
-          class="w-32 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
-          @change="commitDraftSelection"
-        >
-          <option v-for="township in townshipOptions" :key="township" :value="township">{{ township }}</option>
-        </select>
-      </div>
+        <option v-for="county in countyOptions" :key="county" :value="county">{{ county }}</option>
+      </select>
+      <select
+        v-model="draftTownship"
+        class="flex-1 md:flex-none md:w-40 pl-3 pr-2 py-2 rounded-full glass-card border-none focus:ring-2 focus:ring-primary-fixed-dim bg-white/40 text-on-surface font-body-md text-body-md"
+        @change="commitDraftSelection"
+      >
+        <option v-for="township in townshipOptions" :key="township" :value="township">{{ township }}</option>
+      </select>
     </div>
 
     <!-- Overview: every county's current conditions, no location needed -->
@@ -382,8 +374,8 @@ const aqiProgressClass = computed(() => {
             </p>
           </ClientOnly>
 
-          <div class="flex items-baseline justify-center md:justify-start gap-4">
-            <span class="font-display-temp text-display-temp text-primary">{{ heroHour?.temp ?? '--' }}°C</span>
+          <div class="flex flex-wrap items-baseline justify-center md:justify-start gap-x-4 gap-y-2">
+            <span class="font-display-temp text-6xl md:text-display-temp text-primary">{{ heroHour?.temp ?? '--' }}°C</span>
             <span class="font-headline-md text-headline-md text-on-surface-variant flex items-center gap-1">
               <span class="material-symbols-outlined text-primary">arrow_upward</span> {{ heroBlock?.max_temp ?? '--' }}°C
               <span class="material-symbols-outlined text-secondary ml-2">arrow_downward</span> {{ heroBlock?.min_temp ?? '--' }}°C
