@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     const db = useDb()
 
     const result = await db.query(
-      `SELECT
+      `SELECT DISTINCT ON (loc.siteid)
          loc.siteid,
          loc.sitename,
          loc.country,
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
        JOIN ticker.ticker_info t ON t.id = a.ticker_id
        JOIN info.air_pollution_location loc ON loc.siteid = a.site_id
        WHERE $1::int IS NULL OR a.site_id = $1
-       ORDER BY a.publishtime DESC, loc.siteid`,
+       ORDER BY loc.siteid, a.publishtime DESC`,
       [siteId ?? null]
     )
 
