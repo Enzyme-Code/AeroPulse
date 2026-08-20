@@ -15,6 +15,13 @@ export function useCitySelection() {
   const hasTriedGeolocation = useState('hasTriedGeolocation', () => false)
   const locatingByGps = useState('locatingByGps', () => false)
 
+  // The footer's "you are here" indicator: the user's actual GPS position, kept separate
+  // from selectedCounty/selectedTownship (which track whichever city is being viewed in
+  // the dashboard, e.g. via the county/township dropdowns) so browsing elsewhere never
+  // changes what the footer reports.
+  const myLocation = useState<{ county_name: string, township_name: string } | null>('myLocation', () => null)
+  const myLocationLoading = useState('myLocationLoading', () => false)
+
   // Set by the navbar's "use my location" button before it navigates to the detail view;
   // loadDetailData reads and clears it so the single ensureLocationResolved call that
   // already runs on entering detail view does the (forced) GPS lookup, instead of a
@@ -76,6 +83,22 @@ export function useCitySelection() {
     selectedGeocode.value = city.geocode
   }
 
+  // Best-effort, silent GPS lookup for the footer only — does not touch the viewed
+  // selection. Safe to call on every layout mount: it's a no-op once resolved (or once a
+  // lookup is already in flight), so it only ever prompts for permission once per session.
+  async function resolveMyLocation() {
+    if (myLocation.value || myLocationLoading.value) return
+
+    myLocationLoading.value = true
+    await ensureCitiesLoaded()
+    const coords = await getCurrentCoords()
+    const nearest = coords ? findNearestCity(coords, cities.value) : null
+    if (nearest) {
+      myLocation.value = { county_name: nearest.county_name, township_name: nearest.township_name }
+    }
+    myLocationLoading.value = false
+  }
+
   return {
     cities,
     selectedCounty,
@@ -83,8 +106,11 @@ export function useCitySelection() {
     selectedGeocode,
     locatingByGps,
     forceRelocate,
+    myLocation,
+    myLocationLoading,
     ensureCitiesLoaded,
     ensureLocationResolved,
+    resolveMyLocation,
     selectCity
   }
 }

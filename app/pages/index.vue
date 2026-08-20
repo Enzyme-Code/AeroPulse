@@ -214,8 +214,11 @@ async function loadDetailData() {
 onMounted(loadOverview)
 
 // viewMode is shared with the navbar's detail-info icon, so entry can happen from any
-// page — fires immediately too, in case the page mounts already in detail mode.
-watch(viewMode, (mode) => {
+// page — fires immediately too, in case the page mounts already in detail mode. Also
+// watches forceRelocate directly: the navbar's "use my location" button sets it even when
+// viewMode is already 'detail' (e.g. after a county click), which wouldn't otherwise
+// re-trigger this watcher since viewMode itself didn't change.
+watch([viewMode, forceRelocate], ([mode]) => {
   if (mode === 'detail') loadDetailData()
 }, { immediate: true })
 

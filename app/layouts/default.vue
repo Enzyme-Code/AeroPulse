@@ -8,7 +8,7 @@ const navItems = computed(() => [
   { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const { selectedCounty, selectedTownship, locatingByGps, forceRelocate } = useCitySelection()
+const { selectedCounty, selectedTownship, locatingByGps, forceRelocate, myLocation, resolveMyLocation } = useCitySelection()
 const { viewMode } = useViewMode()
 
 function locateMeAndShowDetail() {
@@ -21,6 +21,8 @@ const now = ref(new Date())
 onMounted(() => {
   const timer = setInterval(() => { now.value = new Date() }, 1_000)
   onUnmounted(() => clearInterval(timer))
+
+  resolveMyLocation()
 })
 
 const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
@@ -75,15 +77,14 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
         </nav>
 
         <div class="flex items-center gap-3 ml-auto shrink-0">
-          <NuxtLink
-            to="/"
+          <button
             class="p-2 rounded-full transition-colors"
             :class="viewMode === 'detail' ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
-            title="詳細資訊"
-            @click="viewMode = 'detail'"
+            title="偵測目前位置並查看詳細資訊"
+            @click="locateMeAndShowDetail"
           >
-            <span class="material-symbols-outlined">query_stats</span>
-          </NuxtLink>
+            <span class="material-symbols-outlined" :class="{ 'animate-pulse': locatingByGps }">my_location</span>
+          </button>
         </div>
       </div>
     </header>
@@ -98,7 +99,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
       <div class="max-w-container-max mx-auto flex items-center justify-between gap-4 text-on-surface-variant font-label-sm text-label-sm">
         <div class="flex-1 flex items-center gap-2">
           <span class="material-symbols-outlined text-[16px]">location_on</span>
-          {{ selectedCounty }} {{ selectedTownship }}, 台灣
+          {{ myLocation?.county_name ?? selectedCounty }} {{ myLocation?.township_name ?? selectedTownship }}, 台灣
         </div>
         <div class="flex-1 text-center">
           © {{ now.getFullYear() }} AeroPulse. All rights reserved.
