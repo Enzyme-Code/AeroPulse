@@ -13,6 +13,8 @@ interface Station {
   siteid: number
   sitename: string
   country: string
+  longitude: number
+  latitude: number
 }
 
 interface PollutionRow {
@@ -31,8 +33,7 @@ interface CityCardData {
 }
 
 const { savedCities, load, addCity, removeCity } = useSavedCities()
-const { cities, selectCity, ensureCitiesLoaded } = useCitySelection()
-const { viewMode } = useViewMode()
+const { cities, ensureCitiesLoaded } = useCitySelection()
 const router = useRouter()
 
 const cardData = ref<CityCardData[]>([])
@@ -46,9 +47,16 @@ async function loadCard(city: { geocode: string, county_name: string, township_n
 
   const hour = closestByTime(fillForwardHourly(hourlyRows), 'data_time')
 
+  // Stations are only filtered down to the city's county, so still pick whichever one is
+  // actually nearest to this township rather than always the alphabetically-first result.
+  const cityInfo = cities.value.find(c => c.geocode === city.geocode)
+  const nearestStation = cityInfo
+    ? findNearestCity({ lat: cityInfo.latitude, lng: cityInfo.longitude }, stations)
+    : (stations[0] ?? null)
+
   let pollution: PollutionRow | null = null
-  if (stations.length) {
-    const rows = await $fetch<PollutionRow[]>('/api/air/pollution', { query: { siteId: stations[0].siteid } })
+  if (nearestStation) {
+    const rows = await $fetch<PollutionRow[]>('/api/air/pollution', { query: { siteId: nearestStation.siteid } })
     pollution = rows[0] ?? null
   }
 
@@ -70,9 +78,7 @@ onMounted(async () => {
 watch(savedCities, loadAll)
 
 function goToCity(city: CityCardData) {
-  selectCity(city)
-  viewMode.value = 'detail'
-  router.push('/')
+  router.push(`/weather/${encodeURIComponent(city.county_name)}/${encodeURIComponent(city.township_name)}`)
 }
 
 const addQuery = ref('')
@@ -153,7 +159,7 @@ function handleAddCity(city: (typeof cities.value)[number]) {
         <div class="flex items-center justify-between mt-auto">
           <div class="flex items-center gap-4">
             <span class="material-symbols-outlined text-5xl text-primary" style="font-variation-settings: 'wght' 200">
-              {{ weatherIcon(card.hour?.wx_text ?? null) }}
+              {{ weatherIcon(card.hour?.wx_text ?? null, card.hour ? new Date(card.hour.data_time) : new Date()) }}
             </span>
             <div>
               <div class="font-display-temp text-4xl text-on-surface leading-none">{{ card.hour?.temp ?? '--' }}°C</div>

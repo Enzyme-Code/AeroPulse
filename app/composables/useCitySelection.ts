@@ -22,12 +22,6 @@ export function useCitySelection() {
   const myLocation = useState<{ county_name: string, township_name: string } | null>('myLocation', () => null)
   const myLocationLoading = useState('myLocationLoading', () => false)
 
-  // Set by the navbar's "use my location" button before it navigates to the detail view;
-  // loadDetailData reads and clears it so the single ensureLocationResolved call that
-  // already runs on entering detail view does the (forced) GPS lookup, instead of a
-  // second call racing it.
-  const forceRelocate = useState('forceRelocate', () => false)
-
   function applyFallbackDefault() {
     const match = cities.value.find(
       c => c.county_name === selectedCounty.value && c.township_name === selectedTownship.value
@@ -105,7 +99,6 @@ export function useCitySelection() {
     selectedTownship,
     selectedGeocode,
     locatingByGps,
-    forceRelocate,
     myLocation,
     myLocationLoading,
     ensureCitiesLoaded,
