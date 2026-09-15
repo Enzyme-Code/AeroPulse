@@ -8,13 +8,13 @@ const navItems = computed(() => [
   { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const { selectedCounty, selectedTownship, locatingByGps, forceRelocate, myLocation, resolveMyLocation } = useCitySelection()
-const { viewMode } = useViewMode()
+const isDetailView = computed(() => route.path.startsWith('/weather/'))
 
-function locateMeAndShowDetail() {
-  forceRelocate.value = true
-  viewMode.value = 'detail'
-  router.push('/')
+const { selectedCounty, selectedTownship, locatingByGps, myLocation, ensureLocationResolved, resolveMyLocation } = useCitySelection()
+
+async function locateMeAndShowDetail() {
+  await ensureLocationResolved(true)
+  router.push(`/weather/${encodeURIComponent(selectedCounty.value)}/${encodeURIComponent(selectedTownship.value)}`)
 }
 
 const now = ref(new Date())
@@ -35,7 +35,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
     <!-- Top app bar (mobile): just the logo, so the screen doesn't feel empty above the content -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 flex md:hidden z-40">
       <div class="flex items-center justify-between w-full h-14 px-margin-mobile">
-        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity" @click="viewMode = 'overview'">
+        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
           </div>
@@ -54,7 +54,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
     <!-- Top app bar (desktop): logo, nav links, search and actions in one centered row -->
     <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 hidden md:flex z-40">
       <div class="relative flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
-        <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity" @click="viewMode = 'overview'">
+        <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
           <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
           </div>
@@ -79,7 +79,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
         <div class="flex items-center gap-3 ml-auto shrink-0">
           <button
             class="p-2 rounded-full transition-colors"
-            :class="viewMode === 'detail' ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
+            :class="isDetailView ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
             title="偵測目前位置並查看詳細資訊"
             @click="locateMeAndShowDetail"
           >
