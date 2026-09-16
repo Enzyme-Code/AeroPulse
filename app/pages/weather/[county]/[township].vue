@@ -325,7 +325,7 @@ const aqiProgressClass = computed(() => {
           </span>
         </span>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
         <MetricCard
           icon="thermostat"
           label="體感溫度"
@@ -384,7 +384,7 @@ const aqiProgressClass = computed(() => {
           </span>
         </span>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
         <MetricCard
           icon="thermostat"
           label="平均溫度"
@@ -464,7 +464,7 @@ const aqiProgressClass = computed(() => {
           </span>
         </span>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
         <MetricCard
           icon="blur_on"
           label="PM10"
