@@ -15,7 +15,7 @@ defineProps<{
     <div class="flex flex-row md:flex-col items-center md:items-stretch justify-between gap-3 md:gap-0">
       <div class="flex items-center gap-2 text-on-surface-variant md:mb-2">
         <span class="material-symbols-outlined text-sm">{{ icon }}</span>
-        <span class="font-label-sm text-sm font-semibold tracking-wide uppercase">{{ label }}</span>
+        <span class="font-label-sm text-lg font-semibold tracking-wide uppercase">{{ label }}</span>
       </div>
       <div class="text-right md:text-left md:mt-2">
         <span class="font-headline-md text-headline-md text-on-surface block">
