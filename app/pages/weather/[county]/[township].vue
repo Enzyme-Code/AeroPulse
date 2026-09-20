@@ -384,6 +384,12 @@ const aqiProgressClass = computed(() => {
           </span>
         </span>
       </div>
+      <ClientOnly>
+        <WeeklyForecastChart v-if="weekly.length" :rows="weekly" class="mb-6" />
+        <template #fallback>
+          <div class="w-full h-72 mb-6 animate-pulse bg-surface-container-lowest/40 rounded-xl" />
+        </template>
+      </ClientOnly>
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-stack-gap">
         <MetricCard
           icon="thermostat"
