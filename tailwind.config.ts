@@ -66,7 +66,7 @@ export default {
         'margin-desktop': '2.5rem',
         'margin-mobile': '1rem',
         'stack-gap': '1rem',
-        'container-max': '1440px',
+        'container-max': '1800px',
         gutter: '1.5rem',
         'section-gap': '2.5rem'
       },
