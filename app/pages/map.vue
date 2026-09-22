@@ -32,6 +32,11 @@ interface Pollution {
   status: string | null
 }
 
+usePageSeo({
+  title: '氣象地圖 | AeroPulse',
+  description: '在地圖上瀏覽全台各縣市即時天氣與空氣品質(AQI)分布,快速掌握週邊地區的溫度、天氣狀況與測站空品數據。'
+})
+
 const loading = ref(true)
 const showWeather = ref(true)
 const showAqi = ref(true)
@@ -201,9 +206,7 @@ watch(showAqi, (value) => {
 
     <div class="glass-card rounded-xl overflow-hidden relative">
       <div ref="mapEl" class="w-full h-[50vh] md:h-[70vh]" />
-      <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-surface/60 backdrop-blur-sm">
-        <span class="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
-      </div>
+      <LoadingState v-if="loading" overlay message="正在載入地圖資料..." />
     </div>
 
     <div v-if="showAqi" class="glass-card rounded-xl p-4 grid grid-cols-2 md:flex md:flex-wrap gap-x-3 gap-y-2 md:items-center md:gap-4 font-label-sm text-label-sm text-on-surface-variant">

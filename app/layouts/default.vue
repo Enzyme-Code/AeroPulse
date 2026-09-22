@@ -12,15 +12,29 @@ const isDetailView = computed(() => route.path.startsWith('/weather/'))
 
 const { selectedCounty, selectedTownship, locatingByGps, myLocation, ensureLocationResolved, resolveMyLocation } = useCitySelection()
 
+const locationError = ref(false)
+let locationErrorTimer: ReturnType<typeof setTimeout> | undefined
+
 async function locateMeAndShowDetail() {
-  await ensureLocationResolved(true)
+  const resolved = await ensureLocationResolved(true)
+
+  if (!resolved) {
+    locationError.value = true
+    clearTimeout(locationErrorTimer)
+    locationErrorTimer = setTimeout(() => { locationError.value = false }, 4000)
+    return
+  }
+
   router.push(`/weather/${encodeURIComponent(selectedCounty.value)}/${encodeURIComponent(selectedTownship.value)}`)
 }
 
 const now = ref(new Date())
 onMounted(() => {
   const timer = setInterval(() => { now.value = new Date() }, 1_000)
-  onUnmounted(() => clearInterval(timer))
+  onUnmounted(() => {
+    clearInterval(timer)
+    clearTimeout(locationErrorTimer)
+  })
 
   resolveMyLocation()
 })
@@ -28,6 +42,14 @@ onMounted(() => {
 const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
   year: 'numeric', month: 'long', day: 'numeric'
 }) + ' ' + now.value.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
+
+// Before GPS/a remembered city resolves, there's no real location to show yet —
+// say so instead of rendering blank text.
+const footerLocationLabel = computed(() => {
+  const county = myLocation.value?.county_name ?? selectedCounty.value
+  const township = myLocation.value?.township_name ?? selectedTownship.value
+  return county && township ? `${county} ${township}, 台灣` : '尚未定位'
+})
 </script>
 
 <template>
@@ -41,13 +63,21 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
           </div>
           <h1 class="font-headline-md text-headline-md text-primary">AeroPulse</h1>
         </NuxtLink>
-        <button
-          class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors"
-          title="偵測目前位置"
-          @click="locateMeAndShowDetail"
-        >
-          <span class="material-symbols-outlined" :class="{ 'animate-pulse text-primary': locatingByGps }">my_location</span>
-        </button>
+        <div class="relative">
+          <button
+            class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors"
+            title="偵測目前位置"
+            @click="locateMeAndShowDetail"
+          >
+            <span class="material-symbols-outlined" :class="{ 'animate-pulse text-primary': locatingByGps }">my_location</span>
+          </button>
+          <span
+            v-if="locationError"
+            class="absolute right-0 top-full mt-1 w-max max-w-[220px] px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-body-md text-body-md shadow-lg z-50"
+          >
+            無法定位，請手動選擇地區
+          </span>
+        </div>
       </div>
     </header>
 
@@ -76,7 +106,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
           </NuxtLink>
         </nav>
 
-        <div class="flex items-center gap-3 ml-auto shrink-0">
+        <div class="relative flex items-center gap-3 ml-auto shrink-0">
           <button
             class="p-2 rounded-full transition-colors"
             :class="isDetailView ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
@@ -85,6 +115,12 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
           >
             <span class="material-symbols-outlined" :class="{ 'animate-pulse': locatingByGps }">my_location</span>
           </button>
+          <span
+            v-if="locationError"
+            class="absolute right-0 top-full mt-1 w-max max-w-[220px] px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-body-md text-body-md shadow-lg z-50"
+          >
+            無法定位，請手動選擇地區
+          </span>
         </div>
       </div>
     </header>
@@ -99,7 +135,7 @@ const footerTimestamp = computed(() => now.value.toLocaleDateString('zh-TW', {
       <div class="max-w-container-max mx-auto flex items-center justify-between gap-4 text-on-surface-variant font-label-sm text-label-sm">
         <div class="flex-1 flex items-center gap-2">
           <span class="material-symbols-outlined text-[16px]">location_on</span>
-          {{ myLocation?.county_name ?? selectedCounty }} {{ myLocation?.township_name ?? selectedTownship }}, 台灣
+          {{ footerLocationLabel }}
         </div>
         <div class="flex-1 text-center">
           © {{ now.getFullYear() }} AeroPulse. All rights reserved.
