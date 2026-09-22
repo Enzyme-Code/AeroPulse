@@ -32,6 +32,14 @@ interface CityCardData {
   pollution: PollutionRow | null
 }
 
+usePageSeo({
+  title: '已儲存城市 | AeroPulse',
+  description: '快速比較您已儲存城市的即時天氣與空氣品質狀況。',
+  // Content here comes from each visitor's own localStorage, so an anonymous crawl
+  // always sees an empty list — indexing it would only surface a blank page.
+  noindex: true
+})
+
 const { savedCities, load, addCity, removeCity } = useSavedCities()
 const { cities, ensureCitiesLoaded } = useCitySelection()
 const router = useRouter()

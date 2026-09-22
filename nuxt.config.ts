@@ -12,6 +12,9 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'AeroPulse | 首頁',
+      htmlAttrs: {
+        lang: 'zh-Hant-TW'
+      },
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap' },
@@ -24,6 +27,9 @@ export default defineNuxtConfig({
       url: '',
       ssl: 'false',
       poolMax: '10'
+    },
+    public: {
+      siteUrl: 'https://aeropulse.enzycode.com'
     }
   }
 })

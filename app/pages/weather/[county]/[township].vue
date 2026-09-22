@@ -81,8 +81,38 @@ interface Pollution {
 
 const route = useRoute()
 const router = useRouter()
+const config = useRuntimeConfig()
 
 const { cities, selectedCounty, selectedTownship, selectedGeocode, ensureCitiesLoaded, selectCity } = useCitySelection()
+
+// Derived straight from the route (available synchronously, even during SSR before
+// ensureCitiesLoaded()/selectCity() resolve) rather than from selectedCounty/
+// selectedTownship, which start out defaulted to 臺北市/大安區 until that async lookup
+// finishes — using them here would make every one of the 368 location pages briefly
+// render the same title on first load.
+const routeCounty = computed(() => String(route.params.county ?? ''))
+const routeTownship = computed(() => String(route.params.township ?? ''))
+
+usePageSeo({
+  title: () => `${routeCounty.value} ${routeTownship.value} 天氣預報與空氣品質 | AeroPulse`,
+  description: () => `查詢${routeCounty.value}${routeTownship.value}即時天氣、36小時預報、一週天氣概況與空氣品質(AQI)資訊。`
+})
+
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: () => JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      // No standalone page exists per county, so this is a flat 首頁 -> 縣市+鄉鎮 trail
+      // rather than a three-level one.
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '首頁', item: config.public.siteUrl },
+        { '@type': 'ListItem', position: 2, name: `${routeCounty.value} ${routeTownship.value}`, item: `${config.public.siteUrl}/weather/${encodeURIComponent(routeCounty.value)}/${encodeURIComponent(routeTownship.value)}` }
+      ]
+    })
+  }]
+})
 
 // County/township dropdowns mirror the current route params, but only navigate
 // (and only then trigger a data refresh) once both levels are picked.
@@ -354,6 +384,9 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
       </select>
     </div>
 
+    <LoadingState v-if="loading" message="正在載入天氣與空氣品質資料..." />
+
+    <template v-else>
     <!-- Hero -->
     <section>
       <div class="glass-card rounded-xl p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
@@ -737,5 +770,6 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         />
       </div>
     </section>
+    </template>
   </div>
 </template>
