@@ -18,6 +18,24 @@ interface OverviewPollutionRow {
 
 const router = useRouter()
 const { cities, ensureCitiesLoaded } = useCitySelection()
+const config = useRuntimeConfig()
+
+usePageSeo({
+  title: 'AeroPulse | 台灣即時天氣與空氣品質總覽',
+  description: '掌握全台各縣市即時天氣預報、36小時天氣概況與空氣品質(AQI)資訊,點選縣市即可查看鄉鎮的詳細溫度、降雨機率與空品狀態。'
+})
+
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'AeroPulse',
+      url: config.public.siteUrl
+    })
+  }]
+})
 
 function viewCountyDetail(county: string) {
   const matches = cities.value.filter(c => c.county_name === county)
@@ -81,8 +99,10 @@ onMounted(loadOverview)
 
 <template>
   <div>
+    <LoadingState v-if="overviewLoading" message="正在載入天氣總覽..." />
+
     <!-- Overview: every county's current conditions, no location needed -->
-    <section class="glass-card rounded-xl p-6">
+    <section v-else class="glass-card rounded-xl p-6">
 
       <!-- Card list (mobile) -->
       <div class="grid grid-cols-1 gap-3 md:hidden">
@@ -118,7 +138,7 @@ onMounted(loadOverview)
             </div>
           </div>
         </div>
-        <div v-if="!overviewLoading && overviewRows.length === 0" class="glass-card rounded-xl p-6 text-center text-on-surface-variant">
+        <div v-if="overviewRows.length === 0" class="glass-card rounded-xl p-6 text-center text-on-surface-variant">
           目前沒有資料
         </div>
       </div>
@@ -170,7 +190,7 @@ onMounted(loadOverview)
                 </span>
               </td>
             </tr>
-            <tr v-if="!overviewLoading && overviewRows.length === 0">
+            <tr v-if="overviewRows.length === 0">
               <td colspan="5" class="py-6 text-center text-on-surface-variant">目前沒有資料</td>
             </tr>
           </tbody>
