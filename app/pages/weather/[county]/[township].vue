@@ -653,6 +653,7 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
           :caption="pm10Gauge?.caption"
           :progress="pm10Gauge?.progress"
           :progress-class="pm10Gauge?.progressClass"
+          hide-progress-on-mobile
           info="懸浮微粒。24小時平均濃度,數值依環境部AQI分級換算,顏色越偏紅紫代表濃度越高、對呼吸道影響越大。"
         />
         <MetricCard
@@ -663,6 +664,7 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
           :caption="pm25Gauge?.caption"
           :progress="pm25Gauge?.progress"
           :progress-class="pm25Gauge?.progressClass"
+          hide-progress-on-mobile
           info="細懸浮微粒,粒徑更小可深入肺部與血管。24小時平均濃度,數值依環境部AQI分級換算。"
         />
         <MetricCard
@@ -682,6 +684,7 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         <MetricCard
           icon="wb_sunny"
           label="臭氧 O3"
+          mobile-label="臭氧"
           :value="pollution?.o3 ?? '--'"
           unit="ppb"
           info="臭氧當前濃度(非用於AQI計算的8小時平均值)。高濃度易在夏季晴朗午後出現,刺激眼睛與呼吸道。"
@@ -689,16 +692,19 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         <MetricCard
           icon="wb_sunny"
           label="臭氧 8小時平均"
+          mobile-label="臭氧平均"
           :value="pollution?.o3_8hr ?? '--'"
           unit="ppb"
           :caption="o3Gauge?.caption"
           :progress="o3Gauge?.progress"
           :progress-class="o3Gauge?.progressClass"
+          hide-progress-on-mobile
           info="AQI計算採用的8小時平均濃度,數值依環境部AQI分級換算。"
         />
         <MetricCard
           icon="local_fire_department"
           label="一氧化碳 CO"
+          mobile-label="一氧化碳"
           :value="pollution?.co ?? '--'"
           unit="ppm"
           info="一氧化碳當前濃度(非用於AQI計算的8小時平均值),主要來自燃燒與交通排放。"
@@ -706,26 +712,31 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         <MetricCard
           icon="local_fire_department"
           label="一氧化碳 8小時平均"
+          mobile-label="一氧化碳平均"
           :value="pollution?.co_8hr ?? '--'"
           unit="ppm"
           :caption="coGauge?.caption"
           :progress="coGauge?.progress"
           :progress-class="coGauge?.progressClass"
+          hide-progress-on-mobile
           info="AQI計算採用的8小時平均濃度,數值依環境部AQI分級換算。"
         />
         <MetricCard
           icon="science"
           label="二氧化硫 SO2"
+          mobile-label="二氧化硫"
           :value="pollution?.so2 ?? '--'"
           unit="ppb"
           :caption="so2Gauge?.caption"
           :progress="so2Gauge?.progress"
           :progress-class="so2Gauge?.progressClass"
+          hide-progress-on-mobile
           info="AQI計算採用的1小時濃度,數值依環境部AQI分級換算。主要來自工業與燃煤排放。"
         />
         <MetricCard
           icon="science"
           label="SO2 平均"
+          mobile-label="二氧化硫平均"
           :value="pollution?.so2_avg ?? '--'"
           unit="ppb"
           info="測站另一組移動平均濃度,用於比對趨勢,非AQI計算採用的1小時值。"
@@ -733,16 +744,19 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         <MetricCard
           icon="science"
           label="二氧化氮 NO2"
+          mobile-label="二氧化氮"
           :value="pollution?.no2 ?? '--'"
           unit="ppb"
           :caption="no2Gauge?.caption"
           :progress="no2Gauge?.progress"
           :progress-class="no2Gauge?.progressClass"
+          hide-progress-on-mobile
           info="AQI計算採用的1小時濃度,數值依環境部AQI分級換算。主要來自機動車輛排放。"
         />
         <MetricCard
           icon="science"
           label="一氧化氮 NO"
+          mobile-label="一氧化氮"
           :value="pollution?.no ?? '--'"
           unit="ppb"
           info="氮氧化物的一種,非AQI計算項目,常作為交通污染來源的參考指標。"
@@ -750,6 +764,7 @@ const no2Gauge = computed(() => pollutantGauge(AQI_BREAKPOINTS.no2_1h, pollution
         <MetricCard
           icon="science"
           label="氮氧化物 NOx"
+          mobile-label="氮氧化物"
           :value="pollution?.nox ?? '--'"
           unit="ppb"
           info="NO 與 NO2 的總和,非AQI計算項目,常作為交通污染來源的參考指標。"
