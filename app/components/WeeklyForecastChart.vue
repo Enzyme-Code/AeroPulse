@@ -19,13 +19,16 @@ interface WeeklyBlock {
   min_temp: string | null
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   rows: WeeklyBlock[]
-}>()
+  unit?: string
+}>(), {
+  unit: '°C'
+})
 
 // Average is the headline series; max/min ride along as a shaded range band in
 // the same hue (an area fill "wash"), not as competing lines of their own.
-const COLOR_AVG = '#00668a'
+const COLOR_AVG = '#006194'
 
 function toNumber(value: string | null): number | null {
   if (value == null) return null
@@ -68,16 +71,16 @@ function tooltipFormatter(params: unknown): string {
   // 溫度範圍 band is a solid translucent swatch, like its legend square.
   const row_ = (icon: string, name: string, value: number | null) => `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:4px;">
-      <span style="display:flex;align-items:center;gap:6px;color:#3e484f;font-size:12px;">
+      <span style="display:flex;align-items:center;gap:6px;color:#3f4850;font-size:12px;">
         ${icon}${name}
       </span>
-      <strong style="color:#0b1c30;font-size:13px;">${value == null ? '--' : `${value}°C`}</strong>
+      <strong style="color:#131b2e;font-size:13px;">${value == null ? '--' : `${value}${props.unit}`}</strong>
     </div>`
 
-  const squareIcon = `<span style="width:8px;height:8px;border-radius:2px;background:rgba(0,102,138,0.3);"></span>`
+  const squareIcon = `<span style="width:8px;height:8px;border-radius:2px;background:rgba(0,97,148,0.3);"></span>`
   const ringIcon = `<span style="width:8px;height:8px;border-radius:50%;background:#fff;border:2px solid ${COLOR_AVG};box-sizing:border-box;"></span>`
   return `
-    <div style="font-size:12px;color:#3e484f;">${label}</div>
+    <div style="font-size:12px;color:#3f4850;">${label}</div>
     ${row_(squareIcon, '最高溫度', max)}
     ${row_(ringIcon, '平均溫度', avg)}
     ${row_(squareIcon, '最低溫度', min)}
@@ -96,21 +99,21 @@ const option = computed<EChartsOption>(() => ({
     ],
     itemWidth: 14,
     itemHeight: 8,
-    textStyle: { color: '#3e484f', fontSize: 12 }
+    textStyle: { color: '#3f4850', fontSize: 12 }
   },
   tooltip: {
     trigger: 'axis',
-    axisPointer: { type: 'line', lineStyle: { color: '#bdc8d1' } },
+    axisPointer: { type: 'line', lineStyle: { color: '#bfc7d2' } },
     formatter: tooltipFormatter
   },
   xAxis: {
     type: 'category',
     data: categories.value,
     boundaryGap: false,
-    axisLine: { lineStyle: { color: '#bdc8d1' } },
+    axisLine: { lineStyle: { color: '#bfc7d2' } },
     axisTick: { show: false },
     axisLabel: {
-      color: '#3e484f',
+      color: '#3f4850',
       fontSize: 11,
       lineHeight: 16,
       // Label only the daytime block of each day — one short date per day,
@@ -134,7 +137,7 @@ const option = computed<EChartsOption>(() => ({
     min: (value: { min: number }) => Math.floor(value.min - 2),
     max: (value: { max: number }) => Math.ceil(value.max + 2),
     splitNumber: 6,
-    axisLabel: { color: '#3e484f', fontSize: 11, formatter: '{value}°' },
+    axisLabel: { color: '#3f4850', fontSize: 11, formatter: '{value}°' },
     splitLine: { lineStyle: { color: '#e1e0d9' } }
   },
   series: [

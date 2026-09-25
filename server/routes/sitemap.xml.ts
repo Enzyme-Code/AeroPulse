@@ -6,7 +6,8 @@ interface StaticUrl {
 
 const STATIC_URLS: StaticUrl[] = [
   { loc: '/', changefreq: 'daily', priority: '1.0' },
-  { loc: '/map', changefreq: 'daily', priority: '0.8' }
+  { loc: '/map', changefreq: 'daily', priority: '0.8' },
+  { loc: '/overview', changefreq: 'daily', priority: '0.8' }
   // /saved-cities and /settings are excluded: both are marked noindex (personalized
   // localStorage content and an empty placeholder page, respectively), and a noindexed
   // page shouldn't be advertised in the sitemap.
