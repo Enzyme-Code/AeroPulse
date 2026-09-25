@@ -3,7 +3,11 @@
 // Shared by the home page (remembered location) and /weather/[county]/[township].
 const { selectedCounty, selectedTownship, selectedGeocode } = useCitySelection()
 const { savedCities, load: loadSavedCities, addCity, removeCity } = useSavedCities()
-const { weekly, pollution, loading, heroBlock, heroHour, heroUv, upcomingHours } = useLocationWeather()
+const { weekly, pollution, loading, lastUpdated, load, heroBlock, heroHour, heroUv, upcomingHours } = useLocationWeather()
+
+// Keep an open tab current: silently reload this city's data every AUTO_REFRESH_MS.
+useAutoRefresh(() => load({ silent: true }), lastUpdated)
+const updatedAgo = useUpdatedAgo(lastUpdated)
 const { formatTemp, toDisplay, unitLabel } = useTemperatureUnit()
 
 const isSaved = computed(() => savedCities.value.some(c => c.geocode === selectedGeocode.value))
@@ -78,10 +82,16 @@ const tips = computed(() => lifestyleTips({
                 <span class="material-symbols-outlined text-[18px]" :style="isSaved ? { fontVariationSettings: '\'FILL\' 1' } : {}">favorite</span>
               </button>
             </ClientOnly>
-            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-tertiary-container/15 text-tertiary font-label-sm text-label-sm">
-              <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-              即時更新
-            </span>
+            <ClientOnly>
+              <span
+                v-if="updatedAgo"
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-tertiary-container/15 text-tertiary font-label-sm text-label-sm"
+                :title="`每 ${AUTO_REFRESH_MS / 60_000} 分鐘自動更新`"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
+                {{ updatedAgo }}
+              </span>
+            </ClientOnly>
           </div>
           <ClientOnly>
             <p class="font-body-sm text-body-sm text-on-surface-variant">{{ formattedDate }}<span class="hidden sm:inline"> · </span><span class="block sm:inline">資料來源：中央氣象署</span></p>

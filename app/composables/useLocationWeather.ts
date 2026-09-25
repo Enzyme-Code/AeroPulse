@@ -101,14 +101,31 @@ export function useLocationWeather() {
   const pollution = useState<Pollution | null>('lw:pollution', () => null)
   const loading = useState('lw:loading', () => true)
   const loadedGeocode = useState('lw:geocode', () => '')
+  // ms timestamp of the last successful load; 0 until the first one finishes.
+  const lastUpdated = useState('lw:lastUpdated', () => 0)
 
-  async function load() {
+  // `silent` is for background refreshes of the same city: the current data stays on
+  // screen (no loading state) and a failed refresh just keeps it, instead of erroring.
+  async function load({ silent = false } = {}) {
     if (!selectedCounty.value || !selectedGeocode.value) return
 
+    if (silent) {
+      try {
+        await fetchAndApply()
+      } catch {
+        // Keep showing the previous data; the next refresh tick will try again.
+      }
+      return
+    }
+
+    loading.value = true
+    await fetchAndApply()
+  }
+
+  async function fetchAndApply() {
     const id = ++requestId
     const county = selectedCounty.value
     const geocode = selectedGeocode.value
-    loading.value = true
 
     const [b36, hourlyRows, weeklyRows, stations] = await Promise.all([
       $fetch<ThirtySixHourBlock[]>('/api/weather/36hour', { query: { county } }),
@@ -137,6 +154,7 @@ export function useLocationWeather() {
     weekly.value = weeklyRows
     pollution.value = pollutionRow
     loadedGeocode.value = geocode
+    lastUpdated.value = Date.now()
     loading.value = false
   }
 
@@ -158,6 +176,7 @@ export function useLocationWeather() {
     pollution,
     loading,
     loadedGeocode,
+    lastUpdated,
     load,
     filledHourly,
     heroBlock,
