@@ -43,6 +43,7 @@ usePageSeo({
 const { savedCities, load, addCity, removeCity } = useSavedCities()
 const { cities, ensureCitiesLoaded } = useCitySelection()
 const router = useRouter()
+const { formatTemp } = useTemperatureUnit()
 
 const cardData = ref<CityCardData[]>([])
 const loading = ref(true)
@@ -170,7 +171,7 @@ function handleAddCity(city: (typeof cities.value)[number]) {
               {{ weatherIcon(card.hour?.wx_text ?? null, card.hour ? new Date(card.hour.data_time) : new Date()) }}
             </span>
             <div>
-              <div class="font-display-temp text-4xl text-on-surface leading-none">{{ card.hour?.temp ?? '--' }}°C</div>
+              <div class="font-display-temp text-4xl text-on-surface leading-none">{{ formatTemp(card.hour?.temp) }}</div>
             </div>
           </div>
           <div class="text-right">

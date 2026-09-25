@@ -78,6 +78,9 @@ const currentBlockByCounty = computed(() => {
 
 const pollutionBySite = computed(() => new Map(pollution.value.map(p => [p.siteid, p])))
 
+// Markers are built once as HTML strings, so they use whichever unit was active on load.
+const { formatTemp } = useTemperatureUnit()
+
 const mapEl = ref<HTMLElement | null>(null)
 let map: LeafletMap | null = null
 let weatherLayer: LayerGroup | null = null
@@ -118,7 +121,7 @@ onMounted(async () => {
       className: '',
       html: `<div class="flex items-center gap-1 bg-primary text-on-primary rounded-full pl-1.5 pr-2.5 py-1 shadow-md whitespace-nowrap">
         <span class="material-symbols-outlined text-base">${weatherIcon(block.wx_text)}</span>
-        <span class="font-label-sm text-label-sm">${block.max_temp ?? '--'}°C</span>
+        <span class="font-label-sm text-label-sm">${formatTemp(block.max_temp)}</span>
       </div>`,
       iconAnchor: [20, 14]
     })
@@ -128,7 +131,7 @@ onMounted(async () => {
         <div class="font-body-md text-body-md">
           <div class="font-bold mb-1">${centroid.county}</div>
           <div>${block.wx_text ?? '--'}</div>
-          <div>${block.min_temp ?? '--'}°C - ${block.max_temp ?? '--'}°C</div>
+          <div>${formatTemp(block.min_temp)} - ${formatTemp(block.max_temp)}</div>
           <div>降雨機率 ${block.pop ?? '--'}%</div>
         </div>
       `)

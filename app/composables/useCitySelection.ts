@@ -113,6 +113,7 @@ export function useCitySelection() {
     myLocationLoading,
     ensureCitiesLoaded,
     ensureLocationResolved,
+    restoreLastVisitedCity: applyLastVisitedCity,
     resolveMyLocation,
     selectCity
   }
