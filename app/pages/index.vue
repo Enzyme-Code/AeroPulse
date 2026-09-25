@@ -39,7 +39,10 @@ watch([ready, selectedGeocode], ([isReady, geocode]) => {
   <div class="flex flex-col gap-space-lg md:gap-10">
     <LoadingState v-if="!ready" message="正在載入..." />
 
-    <LocationDashboard v-else-if="selectedGeocode" />
+    <template v-else-if="selectedGeocode">
+      <LocationDashboard />
+      <LocationDetailSections />
+    </template>
 
     <template v-else>
       <section class="relative overflow-hidden rounded-3xl bg-surface-container-lowest shadow-md p-space-xl flex flex-col items-center text-center gap-space-sm">
