@@ -94,6 +94,8 @@ const footerLocationLabel = computed(() => {
       </div>
     </header>
 
+    <QuipMarquee />
+
     <main class="flex-1 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-space-lg md:pt-space-xl pb-28 md:pb-16">
       <slot />
     </main>

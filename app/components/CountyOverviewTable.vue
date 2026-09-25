@@ -11,7 +11,10 @@ const props = defineProps<{
 
 const router = useRouter()
 const { cities, ensureCitiesLoaded } = useCitySelection()
-const { rows, loading, ensureLoaded } = useCountyOverview()
+const { rows, loading, lastUpdated, ensureLoaded, refresh } = useCountyOverview()
+
+useAutoRefresh(refresh, lastUpdated)
+const updatedAgo = useUpdatedAgo(lastUpdated)
 const { formatTemp, toDisplay, unitLabel } = useTemperatureUnit()
 
 const region = ref<Region | '全部'>('全部')
@@ -170,7 +173,9 @@ onMounted(() => {
     </div>
 
     <div v-if="limit" class="pt-space-md mt-space-sm flex items-center justify-between gap-space-sm">
-      <span class="font-body-sm text-body-sm text-outline">共 {{ rows.length || '--' }} 個縣市監測資料</span>
+      <span class="font-body-sm text-body-sm text-outline">
+        共 {{ rows.length || '--' }} 個縣市監測資料<ClientOnly><template v-if="updatedAgo"> · {{ updatedAgo }}</template></ClientOnly>
+      </span>
       <NuxtLink to="/overview" class="flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline">
         <span>查看全部縣市</span>
         <span class="material-symbols-outlined text-[16px]">arrow_forward</span>

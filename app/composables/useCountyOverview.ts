@@ -30,12 +30,10 @@ export function useCountyOverview() {
   const pollution = useState<OverviewPollutionRow[]>('overview:pollution', () => [])
   const loading = useState('overview:loading', () => true)
   const loaded = useState('overview:loaded', () => false)
+  const lastUpdated = useState('overview:lastUpdated', () => 0)
+  let refreshing = false
 
-  async function ensureLoaded() {
-    if (loaded.value) return
-    loaded.value = true
-    loading.value = true
-
+  async function fetchAndApply() {
     const [blockRows, pollutionRows] = await Promise.all([
       $fetch<ThirtySixHourBlock[]>('/api/weather/36hour'),
       $fetch<OverviewPollutionRow[]>('/api/air/pollution')
@@ -43,7 +41,28 @@ export function useCountyOverview() {
 
     blocks.value = blockRows
     pollution.value = pollutionRows
+    lastUpdated.value = Date.now()
+  }
+
+  async function ensureLoaded() {
+    if (loaded.value) return
+    loaded.value = true
+    loading.value = true
+    await fetchAndApply()
     loading.value = false
+  }
+
+  // Background refresh: keeps the current rows on screen, and on failure keeps them too.
+  async function refresh() {
+    if (refreshing) return
+    refreshing = true
+    try {
+      await fetchAndApply()
+    } catch {
+      // Keep the previous rows; the next refresh tick will try again.
+    } finally {
+      refreshing = false
+    }
   }
 
   const aqiByCounty = computed(() => {
@@ -77,5 +96,5 @@ export function useCountyOverview() {
     }))
   })
 
-  return { rows, loading, ensureLoaded }
+  return { rows, loading, lastUpdated, ensureLoaded, refresh }
 }
