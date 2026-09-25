@@ -10,36 +10,44 @@ defineProps<{
   info?: string
   hideProgressOnMobile?: boolean
   mobileLabel?: string
+  iconClass?: string
+  valueClass?: string
+  badge?: string
+  badgeClass?: string
 }>()
 </script>
 
 <template>
-  <div class="glass-card rounded-xl p-5 flex flex-col justify-between relative">
-    <div class="flex flex-row md:flex-col items-center md:items-stretch justify-between gap-3 md:gap-0">
-      <div class="flex items-start gap-2 text-on-surface-variant md:mb-2">
-        <span class="material-symbols-outlined text-sm">{{ icon }}</span>
-        <span class="font-label-sm text-lg font-semibold tracking-wide uppercase leading-tight">
+  <div class="bg-surface-container-lowest p-space-md md:p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+    <div class="flex flex-col">
+      <div class="flex items-center justify-between gap-2 text-on-surface-variant">
+        <span class="flex items-center gap-1 font-title-sm text-body-sm md:text-title-sm min-w-0">
           <span :class="mobileLabel ? 'md:hidden' : ''">{{ mobileLabel ?? label }}</span>
           <span v-if="mobileLabel" class="hidden md:inline">{{ label }}</span>
-        </span>
-        <span v-if="info" class="relative group inline-flex md:absolute md:top-0 md:right-0">
-          <span class="material-symbols-outlined text-sm cursor-help">help</span>
-          <span class="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 bottom-full mb-2 hidden group-hover:block w-56 p-3 rounded-lg bg-surface-container-highest text-on-surface font-body-md text-body-md shadow-lg z-20 normal-case tracking-normal font-normal">
-            {{ info }}
+          <span v-if="info" class="relative group inline-flex">
+            <span class="material-symbols-outlined text-[16px] text-outline cursor-help">info</span>
+            <span class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-56 p-3 rounded-lg bg-inverse-surface text-inverse-on-surface font-body-sm text-body-sm shadow-lg z-20 font-normal">
+              {{ info }}
+            </span>
           </span>
         </span>
+        <span class="material-symbols-outlined text-[18px] md:text-[20px] shrink-0" :class="iconClass ?? 'text-primary'">{{ icon }}</span>
       </div>
-      <div class="text-right md:text-left md:mt-2">
-        <span class="font-headline-md md:font-headline-lg text-headline-md md:text-headline-lg text-on-surface block">
-          {{ value }}
-          <span v-if="unit" class="text-[0.75em] text-on-surface-variant font-normal">{{ unit }}</span>
+      <div class="mt-space-sm mb-space-xs md:mt-space-md md:mb-space-sm">
+        <span class="inline-flex flex-wrap items-baseline gap-x-space-xs">
+          <span class="font-metric-val text-headline-md md:text-metric-val" :class="valueClass ?? 'text-on-surface'">
+            {{ value }}<span v-if="unit" class="text-body-md md:text-headline-sm font-semibold">{{ unit }}</span>
+          </span>
+          <span v-if="badge" class="font-label-md text-label-md font-bold" :class="badgeClass ?? 'text-on-surface-variant'">{{ badge }}</span>
         </span>
-        <span v-if="caption" class="font-body-md text-body-md text-on-surface-variant mt-1 block">{{ caption }}</span>
       </div>
     </div>
+    <slot name="footer">
+      <p v-if="caption" class="font-label-md md:font-body-sm text-label-md md:text-body-sm text-outline">{{ caption }}</p>
+    </slot>
     <div
       v-if="progress !== undefined"
-      class="w-full h-2 bg-outline-variant/30 rounded-full mt-4 overflow-hidden"
+      class="w-full h-1.5 bg-surface-container-high rounded-full mt-space-sm overflow-hidden"
       :class="hideProgressOnMobile ? 'hidden md:block' : ''"
     >
       <div class="h-full rounded-full" :class="progressClass ?? 'bg-primary'" :style="{ width: `${progress}%` }" />
