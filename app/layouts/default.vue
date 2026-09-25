@@ -1,41 +1,24 @@
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
 
 const navItems = computed(() => [
   { label: '首頁', icon: 'dashboard', to: '/' },
   { label: '氣象地圖', icon: 'map', to: '/map' },
-  { label: '已儲存城市', icon: 'location_city', to: '/saved-cities' }
+  { label: '全台即時概況', mobileLabel: '全台概況', icon: 'public', to: '/overview' },
+  { label: '已儲存城市', mobileLabel: '已儲存', icon: 'location_city', to: '/saved-cities' }
 ].map(item => ({ ...item, active: route.path === item.to })))
 
-const isDetailView = computed(() => route.path.startsWith('/weather/'))
-
-const { selectedCounty, selectedTownship, locatingByGps, myLocation, ensureLocationResolved, resolveMyLocation } = useCitySelection()
-
-const locationError = ref(false)
-let locationErrorTimer: ReturnType<typeof setTimeout> | undefined
-
-async function locateMeAndShowDetail() {
-  const resolved = await ensureLocationResolved(true)
-
-  if (!resolved) {
-    locationError.value = true
-    clearTimeout(locationErrorTimer)
-    locationErrorTimer = setTimeout(() => { locationError.value = false }, 4000)
-    return
-  }
-
-  router.push(`/weather/${encodeURIComponent(selectedCounty.value)}/${encodeURIComponent(selectedTownship.value)}`)
-}
+const { selectedCounty, selectedTownship, myLocation, resolveMyLocation } = useCitySelection()
+const { unit, setUnit, load: loadTemperatureUnit } = useTemperatureUnit()
 
 const now = ref(new Date())
 onMounted(() => {
   const timer = setInterval(() => { now.value = new Date() }, 1_000)
   onUnmounted(() => {
     clearInterval(timer)
-    clearTimeout(locationErrorTimer)
   })
 
+  loadTemperatureUnit()
   resolveMyLocation()
 })
 
@@ -53,113 +36,106 @@ const footerLocationLabel = computed(() => {
 </script>
 
 <template>
-  <div class="bg-gradient-weather min-h-screen flex flex-col text-on-surface font-body-md overflow-x-hidden">
-    <!-- Top app bar (mobile): just the logo, so the screen doesn't feel empty above the content -->
-    <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 flex md:hidden z-40">
-      <div class="flex items-center justify-between w-full h-14 px-margin-mobile">
-        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
-          </div>
-          <h1 class="font-headline-md text-headline-md text-primary">AeroPulse</h1>
-        </NuxtLink>
-        <div class="relative">
-          <button
-            class="text-on-surface-variant hover:text-on-surface p-2 rounded-full transition-colors"
-            title="偵測目前位置"
-            @click="locateMeAndShowDetail"
-          >
-            <span class="material-symbols-outlined" :class="{ 'animate-pulse text-primary': locatingByGps }">my_location</span>
-          </button>
-          <span
-            v-if="locationError"
-            class="absolute right-0 top-full mt-1 w-max max-w-[220px] px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-body-md text-body-md shadow-lg z-50"
-          >
-            無法定位，請手動選擇地區
-          </span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Top app bar (desktop): logo, nav links, search and actions in one centered row -->
-    <header class="bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm sticky top-0 hidden md:flex z-40">
-      <div class="relative flex items-center w-full h-16 px-margin-desktop max-w-container-max mx-auto gap-6">
-        <NuxtLink to="/" class="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
-          <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">partly_cloudy_day</span>
-          </div>
-          <h1 class="font-headline-md text-headline-md text-primary">AeroPulse</h1>
-        </NuxtLink>
-
-        <nav class="flex items-center gap-1 shrink-0 absolute left-1/2 -translate-x-1/2">
-          <NuxtLink
-            v-for="item in navItems"
-            :key="item.label"
-            :to="item.to"
-            class="flex items-center gap-2 px-3 py-2 rounded-full transition-colors"
-            :class="item.active
-              ? 'bg-primary/10 text-primary font-bold'
-              : 'text-on-surface-variant hover:bg-surface-container'"
-          >
-            <span class="material-symbols-outlined text-lg" :style="item.active ? { fontVariationSettings: '\'FILL\' 1' } : {}">{{ item.icon }}</span>
-            <span class="hidden xl:inline font-body-md text-body-md">{{ item.label }}</span>
+  <div class="bg-gradient-weather min-h-screen flex flex-col text-on-surface font-body-md antialiased overflow-x-hidden">
+    <header class="sticky top-0 z-50 bg-surface-container-lowest/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+      <div class="h-14 md:h-16 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex items-center justify-between gap-space-md">
+        <div class="flex items-center gap-space-lg">
+          <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-primary flex items-center justify-center shadow-[0_4px_12px_rgba(0,97,148,0.25)]">
+              <span class="material-symbols-outlined text-on-primary text-[20px] md:text-[22px]">air</span>
+            </div>
+            <h1 class="hidden sm:block font-headline-sm text-headline-sm text-primary font-bold tracking-tight">AeroPulse</h1>
           </NuxtLink>
-        </nav>
 
-        <div class="relative flex items-center gap-3 ml-auto shrink-0">
-          <button
-            class="p-2 rounded-full transition-colors"
-            :class="isDetailView ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-on-surface'"
-            title="偵測目前位置並查看詳細資訊"
-            @click="locateMeAndShowDetail"
+          <nav class="hidden md:flex items-center gap-space-xs bg-surface-container-low p-1 rounded-full">
+            <NuxtLink
+              v-for="item in navItems"
+              :key="item.to"
+              :to="item.to"
+              :title="item.label"
+              class="flex items-center px-space-sm lg:px-space-md py-1.5 rounded-full font-title-sm text-title-sm transition-all whitespace-nowrap"
+              :class="item.active
+                ? 'bg-secondary-fixed text-on-secondary-fixed'
+                : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'"
+            >
+              <span class="material-symbols-outlined text-[20px] lg:hidden">{{ item.icon }}</span>
+              <span class="hidden lg:inline">{{ item.label }}</span>
+            </NuxtLink>
+          </nav>
+        </div>
+
+        <div class="flex items-center gap-space-sm md:gap-space-md min-w-0">
+          <LocationPicker />
+
+          <div class="flex items-center bg-surface-container-low p-0.5 rounded-full" role="group" aria-label="溫度單位">
+            <button
+              v-for="option in (['C', 'F'] as const)"
+              :key="option"
+              type="button"
+              class="px-2.5 py-0.5 rounded-full font-label-md text-label-md transition-colors"
+              :class="unit === option ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'"
+              :aria-pressed="unit === option"
+              @click="setUnit(option)"
+            >
+              °{{ option }}
+            </button>
+          </div>
+
+          <NuxtLink
+            to="/saved-cities"
+            aria-label="已儲存城市"
+            title="已儲存城市"
+            class="hidden md:flex w-9 h-9 rounded-full items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"
           >
-            <span class="material-symbols-outlined" :class="{ 'animate-pulse': locatingByGps }">my_location</span>
-          </button>
-          <span
-            v-if="locationError"
-            class="absolute right-0 top-full mt-1 w-max max-w-[220px] px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-body-md text-body-md shadow-lg z-50"
-          >
-            無法定位，請手動選擇地區
-          </span>
+            <span class="material-symbols-outlined text-[20px]">bookmarks</span>
+          </NuxtLink>
+
         </div>
       </div>
     </header>
 
-    <!-- Main content: centered, no sidebar offset -->
-    <main class="flex-1 w-full p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto space-y-section-gap pb-24 md:pb-margin-desktop">
+    <main class="flex-1 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-space-lg md:pt-space-xl pb-28 md:pb-16">
       <slot />
     </main>
 
-    <!-- Footer (desktop): current city, copyright, live timestamp -->
-    <footer class="hidden md:block w-full bg-surface-container-low border-t border-outline-variant/30 py-6 px-margin-desktop">
-      <div class="max-w-container-max mx-auto flex items-center justify-between gap-4 text-on-surface-variant font-label-sm text-label-sm">
-        <div class="flex-1 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[16px]">location_on</span>
-          {{ footerLocationLabel }}
-        </div>
-        <div class="flex-1 text-center">
-          © {{ now.getFullYear() }} AeroPulse. All rights reserved.
-        </div>
-        <ClientOnly>
-          <div class="flex-1 flex items-center justify-end gap-2">
-            <span class="material-symbols-outlined text-[16px]">schedule</span>
-            {{ footerTimestamp }}
+    <footer class="hidden md:block w-full bg-surface-container-low shadow-[0_-1px_8px_rgba(0,0,0,0.03)]">
+      <div class="max-w-container-max mx-auto px-margin-desktop py-space-xl flex flex-col gap-space-md text-on-surface-variant">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-space-md">
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-primary text-[20px]">cloud_done</span>
+            <span class="font-title-sm text-title-sm text-on-surface">資料來源：交通部中央氣象署 (CWA)、環境部空氣品質監測</span>
           </div>
-        </ClientOnly>
+          <div class="flex items-center gap-space-lg font-body-sm text-body-sm">
+            <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to" class="hover:text-primary transition-colors">{{ item.label }}</NuxtLink>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-space-md font-label-md text-label-md text-outline">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">location_on</span>
+            {{ footerLocationLabel }}
+          </span>
+          <span>© {{ now.getFullYear() }} AeroPulse</span>
+          <ClientOnly>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
+              {{ footerTimestamp }}
+            </span>
+          </ClientOnly>
+        </div>
       </div>
     </footer>
 
     <!-- Bottom nav (mobile) -->
-    <nav class="md:hidden fixed bottom-0 w-full bg-surface/80 backdrop-blur-xl border-t border-outline-variant/20 z-50 flex justify-around py-3 px-4">
+    <nav class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.05)] z-50 flex justify-around py-2 px-2">
       <NuxtLink
         v-for="item in navItems"
-        :key="item.label"
+        :key="item.to"
         :to="item.to"
-        class="flex flex-col items-center"
-        :class="item.active ? 'text-primary-fixed-dim' : 'text-on-surface-variant'"
+        class="flex flex-col items-center px-3 py-1 rounded-xl"
+        :class="item.active ? 'text-primary bg-secondary-fixed/60' : 'text-on-surface-variant'"
       >
         <span class="material-symbols-outlined" :style="item.active ? { fontVariationSettings: '\'FILL\' 1' } : {}">{{ item.icon }}</span>
-        <span class="font-label-sm text-[10px] mt-1">{{ item.label }}</span>
+        <span class="font-label-sm text-[10px] mt-0.5">{{ item.mobileLabel ?? item.label }}</span>
       </NuxtLink>
     </nav>
   </div>
